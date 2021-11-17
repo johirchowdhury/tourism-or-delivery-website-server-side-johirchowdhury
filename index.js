@@ -19,6 +19,7 @@ async function run() {
         await client.connect();
         const database = client.db("best-travel-agent");
         const ServiceCollection = database.collection("service");
+        const orderCollection = database.collection("order");
         //GET API
         app.get('/services', async (req, res) => {
             const cursor = ServiceCollection.find({});
@@ -40,6 +41,13 @@ async function run() {
             // console.log('post hitted');
             res.json(result);
         })
+        //use POST to get data by keys
+        app.post('/services/byKeys', async (req, res) => {
+            const keys = req.body;
+            const query = { key: { $in: keys } }
+            const products = await ServiceCollection.find(query).toArray();
+            res.json(products);
+        })
         //delete data
         app.delete('/services/:id', async (req, res) => {
             const id = req.params.id;
@@ -47,6 +55,35 @@ async function run() {
             const result = await ServiceCollection.deleteOne(query);
             res.send(result);
         })
+        app.post('/orders', async (req, res) => {
+            const orders = req.body;
+            const result = await orderCollection.insertOne(orders)
+            // console.log(result)
+            res.send(result);
+        })
+
+        app.get('/myorder', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const order = orderCollection.find(query);
+            const result = await order.toArray();
+            console.log(result);
+            res.json(result);
+        })
+        app.get('/manageOrder', async (req, res) => {
+            const cursor = orderCollection.find({});
+            const orders = await cursor.toArray();
+            console.log(orders)
+            res.send(orders);
+        })
+        app.delete('/manageOrder/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query);
+            res.send(result);
+        })
+
     } finally {
         //   await client.close();
     }
